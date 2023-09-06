@@ -1,3 +1,4 @@
+# IMPORTS
 import tensorflow as tf
 import numpy as np
 import os
@@ -12,6 +13,18 @@ from keras.layers import Dropout
 from keras.layers import Conv2DTranspose
 from keras.layers import concatenate
 
+# HYPERPARAMERERS 
+EPOCHS = 5
+VAL_SUBSPLITS = 5
+BUFFER_SIZE = 500
+BATCH_SIZE = 32
+
+# IMG SIZE
+img_height = 96
+img_width = 128
+num_channels = 3
+
+# DATA PATH
 path = ''
 image_path = os.path.join(path, './data/CameraRGB/')
 mask_path = os.path.join(path, './data/CameraMask/')
@@ -135,30 +148,19 @@ def unet_model(input_size=(96, 128, 3), n_filters=32, n_classes=23):
 
     return model
 
-
-img_height = 96
-img_width = 128
-num_channels = 3
-
 unet = unet_model((img_height, img_width, num_channels))
 unet.compile(optimizer='adam',
              loss=tf.keras.losses.SparseCategoricalCrossentropy(
                  from_logits=True),
              metrics=['accuracy'])
-EPOCHS = 5
-VAL_SUBSPLITS = 5
-BUFFER_SIZE = 500
-BATCH_SIZE = 32
-train_dataset = processed_image_ds.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
-print(processed_image_ds.element_spec)
-model_history = unet.fit(train_dataset, epochs=EPOCHS)
 
+train_dataset = processed_image_ds.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+model_history = unet.fit(train_dataset, epochs=EPOCHS)
 
 def create_mask(pred_mask):
     pred_mask = tf.argmax(pred_mask, axis=-1)
     pred_mask = pred_mask[..., tf.newaxis]
     return pred_mask[0]
-
 
 def display(display_list):
     plt.figure(figsize=(15, 15))
@@ -174,13 +176,9 @@ def display(display_list):
 
 
 def show_predictions(dataset=None, num=1):
-    if dataset:
-        for image, mask in dataset.take(num):
-            pred_mask = unet.predict(image)
-            display([image[0], mask[0], create_mask(pred_mask)])
-    else:
-        display([sample_image, sample_mask,
-                 create_mask(unet.predict(sample_image[tf.newaxis, ...]))])
+    for image, mask in dataset.take(num):
+        pred_mask = unet.predict(image)
+        display([image[0], mask[0], create_mask(pred_mask)])
 
 
 show_predictions(train_dataset, 6)
