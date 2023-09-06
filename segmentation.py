@@ -13,7 +13,7 @@ from keras.layers import Dropout
 from keras.layers import Conv2DTranspose
 from keras.layers import concatenate
 
-# HYPERPARAMERERS 
+# HYPERPARAMERERS
 EPOCHS = 5
 VAL_SUBSPLITS = 5
 BUFFER_SIZE = 500
@@ -148,6 +148,7 @@ def unet_model(input_size=(96, 128, 3), n_filters=32, n_classes=23):
 
     return model
 
+
 unet = unet_model((img_height, img_width, num_channels))
 unet.compile(optimizer='adam',
              loss=tf.keras.losses.SparseCategoricalCrossentropy(
@@ -157,10 +158,12 @@ unet.compile(optimizer='adam',
 train_dataset = processed_image_ds.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 model_history = unet.fit(train_dataset, epochs=EPOCHS)
 
+
 def create_mask(pred_mask):
     pred_mask = tf.argmax(pred_mask, axis=-1)
     pred_mask = pred_mask[..., tf.newaxis]
     return pred_mask[0]
+
 
 def display(display_list):
     plt.figure(figsize=(15, 15))
